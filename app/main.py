@@ -2,9 +2,10 @@ from fastapi import FastAPI, Depends
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.session import get_session
-
+from app.api import users
 
 app = FastAPI(title="Knowledge Hub")
+app.include_router(users.router)
 
 @app.get("/healt")
 async def healt(session: AsyncSession = Depends(get_session)):

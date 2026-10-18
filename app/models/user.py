@@ -7,7 +7,7 @@ from app.db.session import Base
 
 
 
-class User(Base):
+class User(Base): # модель для sql
     __tablename__ = "users"
 
 

@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 
-class Settings(BaseSettings):
+class Settings(BaseSettings): # конфиг дб
     postgres_user: str
     postgres_password: str
     postgres_db: str
