@@ -6,7 +6,7 @@ from app.core.security import hash_password
 from app.db.session import get_session
 from app.models.user import User
 from app.schemas.user import UserCreate, UserRead
-
+from app.api.deps import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -27,3 +27,8 @@ async def register(data: UserCreate, session: AsyncSession = Depends(get_session
     await session.commit()
     await session.refresh(user)
     return user
+
+
+@router.get("/me", response_model=UserRead)
+async def read_me(current_user: User = Depends(get_current_user)):
+    return current_user
