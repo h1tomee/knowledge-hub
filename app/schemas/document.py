@@ -3,7 +3,7 @@ from datetime import datetime
 from pydantic import ConfigDict, BaseModel
 
 
-class DocumentRead(BaseModel):
+class DocumentRead(BaseModel): # данные отдаваемые пользователю
     model_config = ConfigDict(from_attributes=True)
 
 
