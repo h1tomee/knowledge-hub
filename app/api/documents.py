@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +17,22 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 
 
 ALLOWED_EXTENSIONS = {".pdf", ".md", ".txt"}
+
+async def get_own_document( # возвращает юзеру конкретный документ
+        document_id: int, user: User, session: AsyncSession
+) -> Document:
+    document = await session.get(Document, document_id)
+    if document is None or document.user_id != user.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="document not found"
+        )
+    return document
+
+
+def get_file_path(document: Document) -> Path: # возвращает путь папки к документу
+    extension = Path(document.filename).suffix.lower()
+    return Path(settings.upload_dir) / str(document.user_id) / f"{document.id}{extension}"
 
 
 @router.post("", response_model=DocumentRead, status_code=status.HTTP_201_CREATED) # отправка додкумента из доступных форматов
@@ -68,3 +85,36 @@ async def list_documents(
     )
 
     return result.scalars().all() # возвращает список документов
+
+
+@router.get("/{documen_id}/download") # скачивание документа
+async def download_document(
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    document = get_own_document(document_id, current_user, session)
+    path = get_file_path()
+
+    if not path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="document not found",
+        )
+
+    return FileResponse(path, filename=document.filename)
+
+
+@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_document(
+    document_id: int,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    document = get_own_document(document_id, current_user, session)
+    path = get_file_path()
+
+    await session.delete(document)
+    await session.commit()
+
+    path.unlink(missing_on=True)
