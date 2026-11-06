@@ -93,8 +93,8 @@ async def download_document(
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
-    document = get_own_document(document_id, current_user, session)
-    path = get_file_path()
+    document = await get_own_document(document_id, current_user, session)
+    path = get_file_path(document)
 
     if not path.exists():
         raise HTTPException(
@@ -105,16 +105,16 @@ async def download_document(
     return FileResponse(path, filename=document.filename)
 
 
-@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{document_id}", status_code=status.HTTP_204_NO_CONTENT) # удаление документа
 async def delete_document(
     document_id: int,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_session),
 ):
-    document = get_own_document(document_id, current_user, session)
-    path = get_file_path()
+    document = await get_own_document(document_id, current_user, session)
+    path = get_file_path(document)
 
     await session.delete(document)
     await session.commit()
 
-    path.unlink(missing_on=True)
+    path.unlink(missing_ok=True)
