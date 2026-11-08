@@ -1,4 +1,4 @@
-async def test_healt(client):
+async def test_health(client):
     responce = await client.get("/healt")
 
 
